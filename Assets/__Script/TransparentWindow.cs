@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -62,14 +62,13 @@ public class TransparentWindow : MonoBehaviour
 
     void Update()
     {
-        // Ki?m tra chu?t c� ?ang tr�n UI kh�ng
-        if (IsPointerOverUIElement())
+        if (IsPointerOverUIElement() || IsPointerOverGameObject())
         {
-            DisableClickThrough();
+            DisableClickThrough(); // không xuyên
         }
         else
         {
-            EnableClickThrough();
+            EnableClickThrough(); // cho xuyên
         }
     }
 
@@ -85,9 +84,18 @@ public class TransparentWindow : MonoBehaviour
         SetWindowLong(hWnd, GWL_EXSTYLE, style & ~WS_EX_TRANSPARENT);
     }
 
-    // Ki?m tra chu?t c� ?ang hover l�n UI n�o kh�ng
+    // Kiểm tra chuột có hover UI
     private bool IsPointerOverUIElement()
     {
         return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+    }
+
+    // Kiểm tra chuột có đang hover vào bất kỳ collider 2D nào không
+    private bool IsPointerOverGameObject()
+    {
+        Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
+
+        return hit.collider != null;
     }
 }

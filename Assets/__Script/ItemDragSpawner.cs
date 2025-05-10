@@ -1,17 +1,20 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 public class ItemDragSpawner : MonoBehaviour
 {
-    public Button toggleButton;         // N�t b?t/t?t ch? ??
-    public GameObject itemPrefab;       // Prefab v?t ph?m
+    public Button toggleButton;         // Nút bật/tắt chế độ
+    public GameObject itemPrefab;       // Prefab vật phẩm
 
     private bool isDraggingMode = false;
+    private bool canToggle = true;      // Để ngăn nhấn nút liên tục
     private GameObject currentItem;
 
     void Start()
     {
-        toggleButton.onClick.AddListener(ToggleDragMode);
+        // Gán sự kiện nút chỉ 1 lần
+        //toggleButton.onClick.RemoveAllListeners();
+        //toggleButton.onClick.AddListener(ToggleDragMode);
     }
 
     void Update()
@@ -22,43 +25,45 @@ public class ItemDragSpawner : MonoBehaviour
         {
             FollowMouse();
 
+            // Nhấn chuột trái để "thả" vật và chuẩn bị vật mới
             if (Input.GetMouseButtonDown(0))
             {
-                // Nh?n chu?t ? gi? l?i v?t ph?m c?, t?o c�i m?i
-                currentItem = Instantiate(itemPrefab, GetMouseWorldPosition(), Quaternion.identity);
+                currentItem = null; // Vật cũ không theo chuột nữa
             }
         }
         else
         {
-            // N?u ch?a c� item n�o, t?o m?t c�i ??u ti�n
+            // Nếu chưa có vật nào thì tạo mới cái đang kéo theo chuột
             CreateNewItem();
         }
     }
 
-    void ToggleDragMode()
+    public void ToggleDragMode()
     {
-        isDraggingMode = !isDraggingMode;
+        if (!canToggle) return;
+        canToggle = false;
+        Invoke(nameof(EnableToggle), 0.2f); // Chặn spam nút trong 0.2s
 
-        if (!isDraggingMode)
+        isDraggingMode = !isDraggingMode;
+        Debug.Log("Dragging mode: " + isDraggingMode);
+
+        if (!isDraggingMode && currentItem != null)
         {
-            // N?u t?t ch? ??, x�a v?t ph?m ?ang k�o
-            if (currentItem != null)
-            {
-                Destroy(currentItem);
-                currentItem = null;
-            }
+            Destroy(currentItem); // Xoá vật đang theo chuột khi tắt chế độ
+            currentItem = null;
         }
-        else
-        {
-            CreateNewItem();
-        }
+    }
+
+    void EnableToggle()
+    {
+        canToggle = true;
     }
 
     void CreateNewItem()
     {
         if (itemPrefab == null)
         {
-            Debug.LogWarning("itemPrefab ch?a ???c g�n!");
+            Debug.LogWarning("itemPrefab chưa được gán!");
             return;
         }
 
@@ -67,13 +72,16 @@ public class ItemDragSpawner : MonoBehaviour
 
     void FollowMouse()
     {
-        currentItem.transform.position = GetMouseWorldPosition();
+        if (currentItem != null)
+        {
+            currentItem.transform.position = GetMouseWorldPosition();
+        }
     }
 
     Vector3 GetMouseWorldPosition()
     {
         Vector3 mousePos = Input.mousePosition;
-        mousePos.z = 10f; // kho?ng c�ch z ph� h?p ?? th?y v?t ph?m trong camera 2D
+        mousePos.z = 10f; // Camera 2D cần giá trị z để chuyển đúng tọa độ
         return Camera.main.ScreenToWorldPoint(mousePos);
     }
 }
